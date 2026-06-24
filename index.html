@@ -240,7 +240,7 @@ const SUPABASE_URL = 'https://neucljhawzebmzhrqitm.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_lAxZCiM-IfA0PNaGXQf5bQ_0f50DnN2';
 /* Bucket Storage dove viene caricato il CSV grezzo (e cartella, vuota = radice) */
 const STORAGE_BUCKET = 'data';
-const STORAGE_FOLDER = 'iaapa';
+const STORAGE_FOLDER = '';  /* non piu' usato: cartella automatica per cliente */
 /* ============================================================ */
 
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -528,12 +528,20 @@ document.getElementById('vb-search').addEventListener('input',e=>{vbQuery=e.targ
 
 /* ---- scarica il file grezzo da Supabase Storage e lo trasforma ---- */
 async function loadData(){
+  // 1) capisco di che cliente e' l'utente loggato (dalla tabella profiles)
+  const { data:{ user } } = await sb.auth.getUser();
+  if(!user) throw new Error('Sessione non valida.');
+  const { data:prof, error:ep } = await sb.from('profiles').select('client').eq('id', user.id).single();
+  if(ep || !prof || !prof.client) throw new Error('Nessun cliente assegnato a questo utente.');
+  const folder = prof.client;
+  // 2) cerco il CSV piu' recente nella cartella del cliente
   const { data:list, error:e1 } = await sb.storage.from(STORAGE_BUCKET)
-    .list(STORAGE_FOLDER, { limit:100, sortBy:{ column:'created_at', order:'desc' } });
+    .list(folder, { limit:100, sortBy:{ column:'created_at', order:'desc' } });
   if(e1) throw e1;
   const files=(list||[]).filter(f=>f.name && f.name.toLowerCase().endsWith('.csv'));
-  if(!files.length) throw new Error('Nessun file CSV trovato nel bucket "'+STORAGE_BUCKET+'".');
-  const path=(STORAGE_FOLDER?STORAGE_FOLDER+'/':'')+files[0].name;   // il piu' recente
+  if(!files.length) throw new Error('Nessun file CSV nella cartella "'+folder+'".');
+  const path=folder+'/'+files[0].name;
+  // 3) scarico, leggo e trasformo
   const { data:blob, error:e2 } = await sb.storage.from(STORAGE_BUCKET).download(path);
   if(e2) throw e2;
   let text=(await blob.text()).replace(/^\uFEFF/,'');
