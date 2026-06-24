@@ -1,0 +1,584 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IAAPA Expo Asia 2026 — Interactive Visitor Dashboard (DRAFT)</title>
+<style>
+:root{
+ --venice:#055989; --red:#C80815; --lightblue:#269AC8; --orange:#FFA500;
+ --keppel:#329FA6; --pink:#AA2E82; --ink:#1A2733; --mid:#5A6B78; --taupe:#94898E;
+ --panel:#F4F7F9; --line:#E2E9EE; --bg:#EAEEF1;
+ --s1:#C0392B; --s2:#E07A5F; --s3:#FFCA4B; --s4:#8DC63F; --s5:#3F7E3A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Calibri,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px 48px}
+.hero{background:var(--venice);color:#fff;padding:26px 36px}
+.hero h1{font-size:23px;font-weight:800;letter-spacing:.3px}
+.hero .sub{color:#BBD3E2;font-size:13.5px;margin-top:5px}
+.hero .draft{display:inline-block;margin-top:11px;background:var(--s3);color:var(--ink);font-size:11px;font-weight:700;padding:4px 10px;border-radius:3px}
+
+.controls{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin-top:18px;display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.ctl{display:flex;flex-direction:column;gap:5px}
+.ctl label{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--venice)}
+.ctl select{font-family:inherit;font-size:13.5px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);min-width:170px;cursor:pointer}
+.ctl select:focus{outline:2px solid var(--lightblue);border-color:var(--lightblue)}
+.ctl-base{margin-left:auto;text-align:right}
+.ctl-base .n{font-size:30px;font-weight:800;color:var(--venice);line-height:1}
+.ctl-base small{font-size:11px;color:var(--mid)}
+.btn-reset{font-family:inherit;font-size:12px;padding:7px 14px;border:1px solid var(--line);background:var(--panel);border-radius:6px;cursor:pointer;color:var(--mid)}
+.btn-reset:hover{background:#fff;border-color:var(--lightblue);color:var(--venice)}
+.lowbase{color:var(--red);font-weight:700;font-size:11px;margin-top:4px}
+
+.sec{margin-top:26px}
+.sec-h{font-size:12px;font-weight:700;letter-spacing:.6px;color:var(--venice);text-transform:uppercase;margin-bottom:6px;border-bottom:2px solid var(--line);padding-bottom:6px}
+.insight{font-size:14px;color:var(--mid);margin:8px 0 14px}
+
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.kpi-h{font-size:13px;font-weight:700;color:var(--venice);margin-bottom:9px;display:flex;justify-content:space-between;align-items:center}
+.kpi-row{display:flex;align-items:center;gap:12px}
+.kpi-bar{flex:1}
+.kpi-avg{text-align:center;min-width:70px}
+.kpi-avg .v{font-size:25px;font-weight:800;color:var(--venice);line-height:1}
+.kpi-avg small{font-size:10px;color:var(--mid)}
+.delta{font-size:11.5px;font-weight:700;padding:2px 7px;border-radius:10px}
+.delta.up{background:#E6F2E4;color:#2E6B2A}
+.delta.down{background:#FBE6E6;color:#B0232B}
+.delta.flat{background:var(--panel);color:var(--mid)}
+/* dual-bar (total vs filtered) */
+.dbar{display:flex;align-items:center;gap:10px;margin-top:7px}
+.dbar:first-of-type{margin-top:0}
+.dbar .lab{width:74px;flex-shrink:0;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;line-height:1.2}
+.dbar .lab.total{color:var(--taupe)}
+.dbar .lab.filt{color:var(--venice)}
+.dbar .lab small{display:block;font-weight:600;font-size:9px;letter-spacing:0;text-transform:none;color:var(--mid);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dbar .bar{flex:1}
+.dbar .av{width:46px;flex-shrink:0;text-align:right;font-size:16px;font-weight:800;color:var(--ink)}
+.dbar.total .bar{opacity:.55}
+.dbar.total .av{color:var(--taupe);font-size:14px}
+
+.legend{font-size:11px;color:var(--mid);margin-top:10px}
+.legend span{display:inline-block;width:11px;height:11px;border-radius:2px;margin:0 4px 0 10px;vertical-align:middle}
+.foot{margin-top:30px;text-align:center;color:var(--mid);font-size:11px}
+.foot b{color:var(--venice)}
+.empty{padding:40px;text-align:center;color:var(--mid);font-style:italic}
+
+/* verbatims */
+.vb-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.vb-tab{font-family:inherit;font-size:12.5px;font-weight:600;padding:7px 13px;border:1px solid var(--line);background:#fff;border-radius:18px;cursor:pointer;color:var(--mid)}
+.vb-tab .c{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.vb-tab:hover{border-color:var(--lightblue)}
+.vb-tab.on{color:#fff;border-color:transparent}
+.vb-tab.on.pos{background:#2E6B2A}.vb-tab.on.neu{background:var(--venice)}.vb-tab.on.neg{background:var(--red)}.vb-tab.on.all{background:var(--ink)}
+.vb-search{flex:1;min-width:180px;font-family:inherit;font-size:13px;padding:8px 12px;border:1px solid var(--line);border-radius:6px}
+.vb-search:focus{outline:2px solid var(--lightblue);border-color:var(--lightblue)}
+.vb-count{font-size:12px;color:var(--mid)}
+.vb-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.vbs{background:#fff;border:1px solid var(--line);border-top-width:4px;border-radius:8px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.vbs.pos{border-top-color:#2E6B2A}.vbs.neu{border-top-color:var(--venice)}.vbs.neg{border-top-color:var(--red)}
+.vbs .h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}
+.vbs .h b{font-size:13.5px}
+.vbs.pos .h b{color:#2E6B2A}.vbs.neu .h b{color:var(--venice)}.vbs.neg .h b{color:#B0232B}
+.vbs .h .n{font-size:12px;font-weight:700;color:#fff;border-radius:10px;padding:1px 9px}
+.vbs.pos .h .n{background:#2E6B2A}.vbs.neu .h .n{background:var(--venice)}.vbs.neg .h .n{background:var(--red)}
+.vbs ul{list-style:none;margin:0;padding:0}
+.vbs li{font-size:12px;color:var(--ink);padding:5px 0 5px 16px;position:relative;line-height:1.45}
+.vbs li:before{content:"";position:absolute;left:0;top:11px;width:6px;height:6px;border-radius:50%}
+.vbs.pos li:before{background:#2E6B2A}.vbs.neu li:before{background:var(--venice)}.vbs.neg li:before{background:var(--red)}
+.vb-scroll{max-height:440px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:12px;background:var(--panel)}
+.vb-scroll::-webkit-scrollbar{width:9px}.vb-scroll::-webkit-scrollbar-thumb{background:#c4d0d8;border-radius:5px}.vb-scroll::-webkit-scrollbar-track{background:transparent}
+.vb-list{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.vb{background:#fff;border:1px solid var(--line);border-left-width:4px;border-radius:6px;padding:12px 15px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.vb.pos{border-left-color:#2E6B2A}.vb.neu{border-left-color:var(--venice)}.vb.neg{border-left-color:var(--red)}
+.vb .q{font-size:13px;line-height:1.5}
+.vb.pos .q{color:#2E6B2A}.vb.neu .q{color:var(--venice)}.vb.neg .q{color:#B0232B}
+.vb .meta{font-size:10.5px;color:var(--taupe);margin-top:7px;display:flex;gap:10px}
+.vb .tag{background:var(--panel);border-radius:8px;padding:1px 7px}
+@media(max-width:760px){.kpi-grid{grid-template-columns:1fr}.controls{flex-direction:column;align-items:stretch}.ctl-base{margin-left:0;text-align:left}.vb-list{grid-template-columns:1fr}.dayseg{flex-wrap:wrap}}
+.daybar{display:flex;align-items:center;gap:14px;margin-top:18px;flex-wrap:wrap}
+.daybar .t{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#BBD3E2}
+.dayseg{display:inline-flex;background:rgba(255,255,255,.12);border-radius:10px;padding:4px;gap:4px}
+.dayseg button{font-family:inherit;font-size:13.5px;font-weight:700;padding:9px 18px;border:none;background:transparent;color:#fff;border-radius:7px;cursor:pointer;transition:.15s}
+.dayseg button:hover{background:rgba(255,255,255,.12)}
+.dayseg button.on{background:#fff;color:var(--venice)}
+.dayseg button small{display:block;font-size:9.5px;font-weight:600;opacity:.75;letter-spacing:0}
+.dayseg button.on small{opacity:.7}
+.daynew{font-size:12px;color:#BBD3E2}
+.exec{background:#fff;border:1px solid var(--line);border-left:5px solid var(--venice);border-radius:8px;padding:16px 20px;margin-top:18px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.exec-h{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--venice);margin-bottom:8px}
+.exec-badge{background:var(--venice);color:#fff;font-size:11px;padding:2px 9px;border-radius:10px;letter-spacing:.3px}
+.exec-p{font-size:14.5px;line-height:1.55;color:var(--ink);margin-bottom:10px}
+.exec-p b{color:var(--venice)}
+.exec-hl{display:flex;flex-wrap:wrap;gap:8px}
+.exec-hl .h{font-size:12.5px;padding:5px 11px;border-radius:14px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;gap:6px}
+.exec-hl .h b{font-weight:700}
+.exec-hl .h.up{background:#E6F2E4;border-color:#cfe6cb;color:#2E6B2A}
+.exec-hl .h.down{background:#FBE6E6;border-color:#f1cccc;color:#B0232B}
+.exec-hl .h.info{background:#E7F1F7;border-color:#cfe2ee;color:var(--venice)}
+
+/* ===== login (aggiunto) ===== */
+#login{position:fixed;inset:0;background:var(--venice);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px}
+.login-card{background:#fff;border-radius:10px;padding:30px 32px;width:100%;max-width:360px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+.login-card h2{font-size:18px;color:var(--venice);margin-bottom:4px}
+.login-card p{font-size:13px;color:var(--mid);margin-bottom:6px}
+.login-card label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--venice);margin:14px 0 5px}
+.login-card input{width:100%;font-family:inherit;font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:6px}
+.login-card input:focus{outline:2px solid var(--lightblue);border-color:var(--lightblue)}
+.login-card button{width:100%;margin-top:20px;font-family:inherit;font-size:14px;font-weight:700;padding:11px;border:none;border-radius:6px;background:var(--venice);color:#fff;cursor:pointer}
+.login-card button:hover{background:#04476e}
+.login-card button:disabled{opacity:.6;cursor:default}
+.login-err{color:var(--red);font-size:12.5px;margin-top:12px;min-height:16px}
+.login-load{position:fixed;inset:0;background:rgba(5,89,137,.95);color:#fff;display:none;align-items:center;justify-content:center;z-index:60;font-size:15px}
+.hero{position:relative}
+#logout{position:absolute;top:18px;right:20px;font-family:inherit;font-size:12px;padding:6px 12px;border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;border-radius:6px;cursor:pointer}
+#logout:hover{background:rgba(255,255,255,.15)}
+</style></head><body>
+<div id="login">
+  <div class="login-card">
+    <h2>IAAPA Expo Asia — Dashboard</h2>
+    <p>Accedi per visualizzare i dati.</p>
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="username" placeholder="nome@azienda.com">
+    <label for="pwd">Password</label>
+    <input id="pwd" type="password" autocomplete="current-password" placeholder="--------">
+    <button id="loginBtn">Entra</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+<div class="login-load" id="loading">Carico i dati...</div>
+<div id="app" style="display:none">
+
+<div class="hero">
+  <button id="logout">Esci</button>
+  <h1>IAAPA Expo Asia 2026 — Interactive Visitor Dashboard</h1>
+  <div class="sub">Visitor research · cumulative daily reporting · “Pursue the Wonder” · HKCEC · Research by GRS · Platform & norms by Explori</div>
+  <span class="draft">DRAFT — interactive · built on IAAPA Expo Asia 2025 data</span>
+  <div class="daybar">
+    <span class="t">Cumulative view</span>
+    <div class="dayseg" id="dayseg">
+      <button data-d="1" class="on">Day 1<small>Wed 10 Jun</small></button>
+      <button data-d="2">Day 1–2<small>+ Thu 11 Jun</small></button>
+      <button data-d="3">Day 1–3<small>+ Fri 12 Jun</small></button>
+    </div>
+    <span class="daynew" id="daynew"></span>
+  </div>
+</div>
+<div class="wrap">
+
+  <div class="controls">
+    <div class="ctl">
+      <label>Membership</label>
+      <select id="f-member"><option value="">All</option></select>
+    </div>
+    <div class="ctl">
+      <label>Business type</label>
+      <select id="f-business"><option value="">All business types</option></select>
+    </div>
+    <div class="ctl">
+      <label>Region</label>
+      <select id="f-region"><option value="">All regions</option></select>
+    </div>
+    <div class="ctl">
+      <label>Country / Territory</label>
+      <select id="f-country"><option value="">All countries</option></select>
+    </div>
+    <div class="ctl"><button class="btn-reset" id="reset">Reset filters</button></div>
+    <div class="ctl-base">
+      <div class="n" id="base-n">632</div>
+      <small>respondents in view</small>
+      <div class="lowbase" id="lowbase" style="display:none">⚠ Low base — interpret with caution</div>
+    </div>
+  </div>
+
+  <div class="exec" id="exec">
+    <div class="exec-h"><span class="exec-badge" id="exec-badge">Day 1</span><span>Executive summary</span></div>
+    <p class="exec-p" id="exec-p"></p>
+    <div class="exec-hl" id="exec-hl"></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h">Key Performance Indicators</div>
+    <div class="insight" id="kpi-insight">All visitors in the current selection.</div>
+    <div class="kpi-grid" id="kpi-grid"></div>
+    <div class="legend">Distribution: <span style="background:var(--s1)"></span>1 <span style="background:var(--s2)"></span>2 <span style="background:var(--s3)"></span>3 <span style="background:var(--s4)"></span>4 <span style="background:var(--s5)"></span>5 · When a filter is applied, the faded <b>Total</b> bar stays fixed and a <b>Filter</b> bar appears below it, with Δ showing the gap. NPS bar: <span style="background:var(--red)"></span>Detractors <span style="background:var(--s3)"></span>Passives <span style="background:var(--s5)"></span>Promoters.</div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h">Verbatims — In Visitors' Own Words</div>
+    <div class="insight">All 287 open-ended “why would you recommend?” responses, translated into English. <span style="color:#2E6B2A;font-weight:700">Green = positive</span>, <span style="color:var(--venice);font-weight:700">blue = neutral / mixed</span>, <span style="color:#B0232B;font-weight:700">red = negative</span>.</div>
+    <div class="vb-sum">
+      <div class="vbs pos"><div class="h"><b>What visitors value most</b><span class="n" id="vbs-n-pos">94</span></div><ul><li>The show's role as the industry's must-attend hub — 41 comments frame it as the one place the sector gathers.</li><li>Exhibitor quality and professionalism (24 mentions) and strong networking and new contacts (23).</li><li>International reach (17) and exposure to innovation, new products and trends (16).</li></ul></div>
+      <div class="vbs neu"><div class="h"><b>Mixed & conditional views</b><span class="n" id="vbs-n-neu">32</span></div><ul><li>Value is recognised but qualified — useful as an industry gathering, yet several note relevance varies by sub-sector.</li><li>Comparisons to other editions recur: some see Orlando or IAAPA Europe as larger or richer.</li><li>Requests to keep up the breadth of exhibitors, education and forward-looking content.</li></ul></div>
+      <div class="vbs neg"><div class="h"><b>What needs fixing</b><span class="n" id="vbs-n-neg">28</span></div><ul><li>Venue experience is the top complaint (8): heat / no air-con, long walks, hard car access and difficult navigation.</li><li>Scale concerns (11): the show felt small or had too few / too similar exhibitors, especially vs. past editions.</li><li>Operational gaps: ticket price, food options, weak education prep, and badge/WiFi friction.</li></ul></div>
+    </div>
+    <div class="vb-controls">
+      <button class="vb-tab all on" data-s="all">All</button>
+      <button class="vb-tab pos" data-s="pos"><span class="c" style="background:#2E6B2A"></span>Positive</button>
+      <button class="vb-tab neu" data-s="neu"><span class="c" style="background:var(--venice)"></span>Neutral</button>
+      <button class="vb-tab neg" data-s="neg"><span class="c" style="background:var(--red)"></span>Negative</button>
+      <input class="vb-search" id="vb-search" placeholder="Search verbatims (e.g. venue, networking, food)…">
+      <span class="vb-count" id="vb-count"></span>
+    </div>
+    <div class="vb-scroll"><div class="vb-list" id="vb-list"></div></div>
+  </div>
+
+  <div class="foot">
+    <b>GRS</b> · driving human experience · grsnet.it &nbsp;|&nbsp; Research & analysis by GRS · Platform & benchmark norms by Explori · Prepared for IAAPA<br>
+    Confidential · aggregated & anonymised · clusters are exploratory (k-modes, k=4, n=632). KPIs recompute live from per-respondent data.
+  </div>
+</div>
+
+</div>
+<script type="module">
+
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import Papa from 'https://cdn.jsdelivr.net/npm/papaparse@5.4.1/+esm';
+
+/* ============================================================
+   CONFIGURAZIONE  --  inserisci i tuoi valori (Settings -> API)
+   ============================================================ */
+const SUPABASE_URL = 'https://neucljhawzebmzhrqitm.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_lAxZCiM-IfA0PNaGXQf5bQ_0f50DnN2';
+/* Bucket Storage dove viene caricato il CSV grezzo (e cartella, vuota = radice) */
+const STORAGE_BUCKET = 'data';
+const STORAGE_FOLDER = 'iaapa';
+/* ============================================================ */
+
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+let DATA = [], VERB = [], SEGS = [];
+
+/* ---- tabelle di conversione dal formato grezzo del sondaggio ---- */
+const SAT = {'Very satisfied':5,'Fairly satisfied':4,'Somewhat satisfied':3,'Not very satisfied':2,'Not at all satisfied':1};
+const IMP = {'Very important':5,'Fairly important':4,'Somewhat important':3,'Not very important':2,'Not at all important':1};
+const RET = {'Definitely will':5,'Probably will':4,'Might / unsure':3,'Probably not':2,'Definitely not':1};
+const ASIA = new Set(['China','Hong Kong','Macau','Taiwan','Japan','South Korea','Korea','Singapore','Malaysia','Thailand','Indonesia','Philippines','Vietnam','India','Brunei','Cambodia','Laos','Myanmar','Sri Lanka','Bangladesh','Pakistan','Nepal','Mongolia','United Arab Emirates','Saudi Arabia','Qatar','Kuwait','Bahrain','Oman','Afghanistan','Christmas Island']);
+const mapScale = (M,v)=>{ v=(v||'').trim(); return (v in M)?M[v]:null; };
+const region = c=>{ if(!c) return ''; if(c==='China') return 'China'; return ASIA.has(c)?'Rest of Asia':'Rest of World'; };
+const npsnum = s=>{ s=(s||'').trim(); if(!s) return null; const h=s.split('=')[0].trim().split(/\s+/)[0]; const n=parseInt(h,10); return isNaN(n)?null:n; };
+const dayOf = s=>{ s=(s||'').trim(); if(!s) return null; const d=s.split('/')[0]; return ({'10':1,'11':2,'12':3})[d]||null; };
+const langOf = s=>{ s=s||''; return s.startsWith('en')?'EN':(s.startsWith('zh')?'ZH':s.slice(0,2).toUpperCase()); };
+
+/* ---- trasforma le righe grezze (array di array) nella forma che i grafici usano ---- */
+function transform(rows){
+  const H = rows[0] || [];
+  const ix = n => H.indexOf(n);
+  const iC=ix('Country'), iS=ix('Overall satisfaction (trade)'), iI=ix('Importance of [eventName] (trade)'),
+        iN=ix('Net promoter (trade)'), iR=ix('Likelihood of return (annual event)'),
+        iRole=ix('Decision Role'), iLang=ix('langcode'), iDate=ix('completedDate'),
+        iBus=ix('[IMPORTED] Primary business type'), iMem=ix('IAAPA member'),
+        iPV=ix('Promoters Verbatim'), iNV=ix('Non-Promoters Verbatim');
+  const D=[], V=[]; let rid=0, vid=0;
+  for(let r=1;r<rows.length;r++){
+    const row=rows[r]; if(!row || row.length<5) continue;
+    const c=(iC>=0?(row[iC]||''):'').trim();
+    const nps=npsnum(row[iN]); const day=dayOf(row[iDate]);
+    D.push({
+      client:'iaapa', rid:rid++, country:c, region:region(c),
+      role:(iRole>=0?(row[iRole]||''):'').trim(),
+      business:(iBus>=0?(row[iBus]||''):'').trim(),
+      member:(iMem>=0?(row[iMem]||''):'').trim(),
+      imp:mapScale(IMP,row[iI]), sat:mapScale(SAT,row[iS]), ret:mapScale(RET,row[iR]),
+      nps:nps, day:day
+    });
+    const lang=langOf(row[iLang]);
+    const sent=(nps!=null && nps>=9)?'pos':((nps!=null && nps>=7)?'neu':'neg');
+    [iPV,iNV].forEach(i=>{ const t=(i>=0?(row[i]||''):'').trim(); if(t){ V.push({client:'iaapa', id:vid++, nps:(nps!=null?nps:''), lang:lang, sent:sent, day:day, en:t}); } });
+  }
+  return {D,V};
+}
+
+const SEGCOL = ["#055989","#329FA6","#FFA500","#AA2E82"];
+const SCALE5 = ["#C0392B","#E07A5F","#FFCA4B","#8DC63F","#3F7E3A"];
+const LOW_BASE = 30;
+
+// ---- stats helpers ----
+function distAvg(rows, key){
+  const v = rows.map(r=>r[key]).filter(x=>x!=null);
+  if(!v.length) return null;
+  const pct=[0,0,0,0,0]; v.forEach(x=>pct[x-1]++);
+  const avg=v.reduce((a,b)=>a+b,0)/v.length;
+  return {n:v.length, avg, pct:pct.map(c=>Math.round(100*c/v.length))};
+}
+function npsCalc(rows){
+  const v=rows.map(r=>r.nps).filter(x=>x!=null);
+  if(!v.length) return null;
+  const prom=v.filter(x=>x>=9).length, det=v.filter(x=>x<=6).length, pas=v.length-prom-det;
+  return {n:v.length, score:Math.round(100*(prom-det)/v.length),
+    prom:Math.round(100*prom/v.length), pas:Math.round(100*pas/v.length), det:Math.round(100*det/v.length)};
+}
+// ---- svg builders ----
+function stackBar(pct,w=520,h=30){
+  let x=0,s="";
+  pct.forEach((p,i)=>{const sw=p/100*w; if(sw>0){
+    s+='<rect x="'+x.toFixed(1)+'" y="0" width="'+sw.toFixed(1)+'" height="'+h+'" fill="'+SCALE5[i]+'"/>';
+    if(p>=7){const tc=(i<=1||i===4)?"#fff":"#1A2733"; s+='<text x="'+(x+sw/2).toFixed(1)+'" y="'+(h/2+4)+'" font-size="12" font-weight="700" fill="'+tc+'" text-anchor="middle">'+p+'%</text>';}
+    x+=sw;}});
+  return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" height="'+h+'" preserveAspectRatio="none" style="max-width:'+w+'px">'+s+'</svg>';
+}
+function npsBar(o,w=520,h=30){
+  const segs=[[o.det,"#C80815","#fff"],[o.pas,"#FFCA4B","#1A2733"],[o.prom,"#3F7E3A","#fff"]]; let x=0,s="";
+  segs.forEach(([p,c,tc])=>{const sw=p/100*w; s+='<rect x="'+x.toFixed(1)+'" y="0" width="'+sw.toFixed(1)+'" height="'+h+'" fill="'+c+'"/>'+
+    (p>=7?'<text x="'+(x+sw/2).toFixed(1)+'" y="'+(h/2+4)+'" font-size="12" font-weight="700" fill="'+tc+'" text-anchor="middle">'+p+'%</text>':''); x+=sw;});
+  return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" height="'+h+'" preserveAspectRatio="none" style="max-width:'+w+'px">'+s+'</svg>';
+}
+function deltaChip(val, ref, isNps){
+  if(val==null||ref==null) return '';
+  const d = val-ref; const dec = isNps? 0 : 2;
+  const txt = (d>0?'+':'') + (isNps? Math.round(d) : d.toFixed(2));
+  const cls = Math.abs(d) < (isNps?2:0.04) ? 'flat' : (d>0?'up':'down');
+  const arrow = cls==='flat'?'→':(d>0?'▲':'▼');
+  return '<span class="delta '+cls+'">'+arrow+' Δ '+txt+' vs total</span>';
+}
+
+// ---- day scope (cumulative): DAY=1 -> day<=1, etc. ----
+let DAY = 1;
+function dayRows(){ return DATA.filter(r=>r.day<=DAY); }
+// REF = full sample FOR THE SELECTED DAY (the fixed "Total" baseline within that cumulative view)
+let REF = null;
+function computeREF(){
+  const d=dayRows();
+  REF = { imp: distAvg(d,'imp'), sat: distAvg(d,'sat'), ret: distAvg(d,'ret'), nps: npsCalc(d) };
+}
+
+function kpiCardHTML(title, k, refk, showDelta){
+  if(!k) return '<div class="kpi"><div class="kpi-h">'+title+'</div><div class="empty" style="padding:14px">No data</div></div>';
+  return '<div class="kpi"><div class="kpi-h"><span>'+title+'</span>'+(showDelta?deltaChip(k.avg,refk.avg,false):'')+'</div>'+
+    '<div class="kpi-row"><div class="kpi-bar">'+stackBar(k.pct)+'</div>'+
+    '<div class="kpi-avg"><div class="v">'+k.avg.toFixed(2)+'</div><small>avg / 5 · n='+k.n+'</small></div></div></div>';
+}
+function npsCardHTML(o, ref, showDelta){
+  if(!o) return '<div class="kpi"><div class="kpi-h">Net Promoter Score</div><div class="empty" style="padding:14px">No data</div></div>';
+  return '<div class="kpi"><div class="kpi-h"><span>Net Promoter Score</span>'+(showDelta?deltaChip(o.score,ref.score,true):'')+'</div>'+
+    '<div class="kpi-row"><div class="kpi-bar">'+npsBar(o)+'</div>'+
+    '<div class="kpi-avg"><div class="v">'+(o.score>=0?'+':'')+o.score+'</div><small>NPS · n='+o.n+'</small></div></div>'+
+    '<div class="legend" style="margin-top:7px">'+o.prom+'% Promoters · '+o.pas+'% Passives · '+o.det+'% Detractors</div></div>';
+}
+
+function renderKPIs(rows, showDelta){
+  const k={imp:distAvg(rows,'imp'),sat:distAvg(rows,'sat'),ret:distAvg(rows,'ret'),nps:npsCalc(rows)};
+  document.getElementById('kpi-grid').innerHTML =
+    kpiCardHTML('Importance of Event',k.imp,REF.imp,showDelta)+
+    kpiCardHTML('Overall Satisfaction',k.sat,REF.sat,showDelta)+
+    kpiCardHTML('Likelihood to Return',k.ret,REF.ret,showDelta)+
+    npsCardHTML(k.nps,REF.nps,showDelta);
+}
+
+// ---- dual-bar renderers for the top FILTER section (Total stays fixed vs filtered) ----
+let FILTLABEL='';
+function dualKpiCard(title, kf, kref){
+  if(!kref) return '<div class="kpi"><div class="kpi-h">'+title+'</div><div class="empty" style="padding:14px">No data</div></div>';
+  const filtered = !!FILTLABEL;
+  let body='';
+  if(!filtered){
+    body='<div class="dbar"><div class="lab total">'+DAYLABEL[DAY]+'</div><div class="bar">'+stackBar(kref.pct)+'</div><div class="av" style="color:var(--venice)">'+kref.avg.toFixed(2)+'</div></div>';
+  } else {
+    body='<div class="dbar total"><div class="lab total">Total<small>'+DAYLABEL[DAY]+' · n='+kref.n+'</small></div><div class="bar">'+stackBar(kref.pct)+'</div><div class="av">'+kref.avg.toFixed(2)+'</div></div>';
+    if(kf) body+='<div class="dbar"><div class="lab filt">Filter<small>'+FILTLABEL+' · n='+kf.n+'</small></div><div class="bar">'+stackBar(kf.pct)+'</div><div class="av">'+kf.avg.toFixed(2)+'</div></div>';
+    else body+='<div class="dbar"><div class="lab filt">Filter<small>'+FILTLABEL+'</small></div><div class="bar" style="color:var(--mid);font-size:12px;font-style:italic">no responses</div><div class="av">–</div></div>';
+  }
+  return '<div class="kpi"><div class="kpi-h"><span>'+title+'</span>'+(filtered&&kf?deltaChip(kf.avg,kref.avg,false):'')+'</div>'+body+'</div>';
+}
+function dualNpsCard(of, oref){
+  if(!oref) return '<div class="kpi"><div class="kpi-h">Net Promoter Score</div><div class="empty" style="padding:14px">No data</div></div>';
+  const filtered=!!FILTLABEL;
+  const npsScale=o=>{ // map nps split into a 0-100 stacked bar [det,pas,prom] using SCALE5 ends
+    return null; };
+  let body='';
+  const npsMini=(o)=>npsBar(o); // reuse 3-seg bar
+  if(!filtered){
+    body='<div class="dbar"><div class="lab total">'+DAYLABEL[DAY]+'</div><div class="bar">'+npsMini(oref)+'</div><div class="av" style="color:var(--venice)">'+(oref.score>=0?'+':'')+oref.score+'</div></div>';
+  } else {
+    body='<div class="dbar total"><div class="lab total">Total<small>'+DAYLABEL[DAY]+' · n='+oref.n+'</small></div><div class="bar">'+npsMini(oref)+'</div><div class="av">'+(oref.score>=0?'+':'')+oref.score+'</div></div>';
+    if(of) body+='<div class="dbar"><div class="lab filt">Filter<small>'+FILTLABEL+' · n='+of.n+'</small></div><div class="bar">'+npsMini(of)+'</div><div class="av">'+(of.score>=0?'+':'')+of.score+'</div></div>';
+    else body+='<div class="dbar"><div class="lab filt">Filter<small>'+FILTLABEL+'</small></div><div class="bar" style="color:var(--mid);font-size:12px;font-style:italic">no responses</div><div class="av">–</div></div>';
+  }
+  return '<div class="kpi"><div class="kpi-h"><span>Net Promoter Score</span>'+(filtered&&of?deltaChip(of.score,oref.score,true):'')+'</div>'+body+
+    '<div class="legend" style="margin-top:8px">Bar: Detractors · Passives · Promoters</div></div>';
+}
+function renderFilterKPIs(rows){
+  const k={imp:distAvg(rows,'imp'),sat:distAvg(rows,'sat'),ret:distAvg(rows,'ret'),nps:npsCalc(rows)};
+  document.getElementById('kpi-grid').innerHTML =
+    dualKpiCard('Importance of Event',k.imp,REF.imp)+
+    dualKpiCard('Overall Satisfaction',k.sat,REF.sat)+
+    dualKpiCard('Likelihood to Return',k.ret,REF.ret)+
+    dualNpsCard(k.nps,REF.nps);
+}
+
+// ---- filters ----
+const F={country:'',region:'',business:'',member:''};
+function applyFilters(){
+  return dayRows().filter(r=>
+    (!F.country||r.country===F.country)&&(!F.region||r.region===F.region)&&
+    (!F.business||r.business===F.business)&&(!F.member||r.member===F.member));
+}
+function uniq(key){return [...new Set(DATA.map(r=>r[key]))].sort();}
+function fillSelect(id,key){
+  const sel=document.getElementById(id);
+  uniq(key).forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});
+}
+
+const DAYLABEL={1:'Day 1',2:'Day 1–2',3:'Day 1–3'};
+function refreshFilterView(){
+  computeREF();
+  const rows=applyFilters();
+  const dayTotal=dayRows().length;
+  document.getElementById('base-n').textContent=rows.length;
+  document.getElementById('lowbase').style.display = (rows.length<LOW_BASE && rows.length>0)?'block':'none';
+  const filt=Object.entries(F).filter(([,v])=>v).map(([k,v])=>v);
+  FILTLABEL = filt.length? filt.join(' · ') : '';
+  document.getElementById('kpi-insight').innerHTML = filt.length
+    ? ('Comparing <b>'+FILTLABEL+'</b> (n='+rows.length+') against the <b>'+DAYLABEL[DAY]+'</b> total (n='+dayTotal+').')
+    : ('<b>'+DAYLABEL[DAY]+'</b> — all visitors (cumulative, n='+dayTotal+'). Apply a filter to compare a subgroup against this total.');
+  renderFilterKPIs(rows);
+  renderExec(rows, filt);
+}
+
+// ---- executive summary (auto-generated from the numbers) ----
+function renderExec(rows, filt){
+  document.getElementById('exec-badge').textContent=DAYLABEL[DAY];
+  const dayTotal=dayRows().length;
+  const filtered = filt.length>0;
+  const scope = filtered ? rows : dayRows();
+  const k={imp:distAvg(scope,'imp'),sat:distAvg(scope,'sat'),ret:distAvg(scope,'ret'),nps:npsCalc(scope)};
+  if(!k.sat){ document.getElementById('exec-p').innerHTML='No respondents match the current selection.'; document.getElementById('exec-hl').innerHTML=''; return; }
+  const who = filtered ? ('<b>'+FILTLABEL+'</b> visitors') : 'visitors';
+  // narrative sentence
+  let p = 'Across <b>'+DAYLABEL[DAY]+'</b>, '+who+' (n='+scope.length+') rate the event '+
+    '<b>'+k.sat.avg.toFixed(2)+'/5</b> for satisfaction, <b>'+k.imp.avg.toFixed(2)+'/5</b> for importance and '+
+    '<b>'+k.ret.avg.toFixed(2)+'/5</b> for likelihood to return, with a Net Promoter Score of <b>'+(k.nps.score>=0?'+':'')+k.nps.score+'</b>.';
+  document.getElementById('exec-p').innerHTML = p;
+
+  const HL=[];
+  // 1) trend vs previous cumulative day (only when not filtered, and day>1)
+  if(!filtered && DAY>1){
+    const prev=DATA.filter(r=>r.day<=(DAY-1));
+    const ps=distAvg(prev,'sat'), pn=npsCalc(prev);
+    const dSat=k.sat.avg-ps.avg, dNps=k.nps.score-pn.score;
+    const cls=dSat>0.02?'up':(dSat<-0.02?'down':'info');
+    HL.push('<span class="h '+cls+'">'+(dSat>0?'▲':dSat<0?'▼':'→')+' Satisfaction <b>'+(dSat>=0?'+':'')+dSat.toFixed(2)+'</b> vs '+DAYLABEL[DAY-1]+'</span>');
+    const ncls=dNps>0?'up':(dNps<0?'down':'info');
+    HL.push('<span class="h '+ncls+'">'+(dNps>0?'▲':dNps<0?'▼':'→')+' NPS <b>'+(dNps>=0?'+':'')+dNps+'</b> vs '+DAYLABEL[DAY-1]+'</span>');
+  }
+  // 2) when filtered: biggest gap vs day total
+  if(filtered){
+    const refk={sat:REF.sat,imp:REF.imp,ret:REF.ret};
+    const gaps=[['Satisfaction',k.sat.avg-REF.sat.avg],['Importance',k.imp.avg-REF.imp.avg],['Return',k.ret.avg-REF.ret.avg]];
+    gaps.sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]));
+    const [gname,gval]=gaps[0];
+    const cls=gval>0.02?'up':(gval<-0.02?'down':'info');
+    HL.push('<span class="h '+cls+'">'+(gval>0?'▲':gval<0?'▼':'→')+' '+gname+' <b>'+(gval>=0?'+':'')+gval.toFixed(2)+'</b> vs '+DAYLABEL[DAY]+' total</span>');
+    const dNps=k.nps.score-REF.nps.score;
+    const ncls=dNps>0?'up':(dNps<0?'down':'info');
+    HL.push('<span class="h '+ncls+'">'+(dNps>0?'▲':dNps<0?'▼':'→')+' NPS <b>'+(dNps>=0?'+':'')+dNps+'</b> vs total</span>');
+    if(scope.length<LOW_BASE) HL.push('<span class="h down">⚠ Low base (n='+scope.length+')</span>');
+  } else {
+    // strongest KPI as an info chip
+    const best=[['Importance',k.imp.avg],['Satisfaction',k.sat.avg],['Return',k.ret.avg]].sort((a,b)=>b[1]-a[1])[0];
+    HL.push('<span class="h info">Strongest KPI: <b>'+best[0]+' '+best[1].toFixed(2)+'</b></span>');
+  }
+  document.getElementById('exec-hl').innerHTML=HL.join('');
+}
+['country','region','business','member'].forEach(k=>{
+  document.getElementById('f-'+k).addEventListener('change',e=>{F[k]=e.target.value;refreshFilterView();});
+});
+document.getElementById('reset').addEventListener('click',()=>{
+  Object.keys(F).forEach(k=>F[k]='');
+  refreshFilterView();
+});
+
+// ---- day selector ----
+const DAYNEW={1:'Baseline day · 222 respondents',2:'+210 new on Day 2 · 432 cumulative',3:'+200 new on Day 3 · 632 cumulative'};
+function setDay(d){
+  DAY=d;
+  document.querySelectorAll('#dayseg button').forEach(b=>b.classList.toggle('on',+b.dataset.d===d));
+  document.getElementById('daynew').textContent=DAYNEW[d];
+  refreshFilterView();
+  renderVerbatims();
+}
+document.querySelectorAll('#dayseg button').forEach(b=>b.addEventListener('click',()=>setDay(+b.dataset.d)));
+
+// ---- verbatims ----
+const SENTLABEL={pos:"Positive",neu:"Neutral",neg:"Negative"};
+let vbFilter='all', vbQuery='';
+function renderVerbatims(){
+  const q=vbQuery.trim().toLowerCase();
+  const dayVerb=VERB.filter(v=>v.day<=DAY);
+  let list=dayVerb.filter(v=>(vbFilter==='all'||v.sent===vbFilter)&&(!q||v.en.toLowerCase().includes(q)));
+  // sort: within view, keep positive→neutral→negative grouping when 'all'
+  const order={pos:0,neu:1,neg:2};
+  list=list.slice().sort((a,b)=>order[a.sent]-order[b.sent]);
+  document.getElementById('vb-count').textContent=list.length+' of '+dayVerb.length+' shown ('+DAYLABEL[DAY]+')';
+  // update summary box counts to the day
+  const cnt={pos:0,neu:0,neg:0}; dayVerb.forEach(v=>cnt[v.sent]++);
+  ['pos','neu','neg'].forEach(s=>{const el=document.getElementById('vbs-n-'+s); if(el) el.textContent=cnt[s];});
+  const langName={EN:"English",ZH:"translated from Chinese",KO:"translated from Korean"};
+  document.getElementById('vb-list').innerHTML = list.length? list.map(v=>
+    '<div class="vb '+v.sent+'"><div class="q">“'+v.en+'”</div>'+
+    '<div class="meta"><span class="tag">'+SENTLABEL[v.sent]+'</span>'+
+    '<span>NPS '+v.nps+'</span><span>'+(langName[v.lang]||v.lang)+'</span></div></div>'
+  ).join('') : '<div class="empty">No verbatims match your filter.</div>';
+}
+document.querySelectorAll('.vb-tab').forEach(el=>el.addEventListener('click',()=>{
+  vbFilter=el.dataset.s;
+  document.querySelectorAll('.vb-tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on'); renderVerbatims();
+}));
+document.getElementById('vb-search').addEventListener('input',e=>{vbQuery=e.target.value;renderVerbatims();});
+
+
+
+/* ---- scarica il file grezzo da Supabase Storage e lo trasforma ---- */
+async function loadData(){
+  const { data:list, error:e1 } = await sb.storage.from(STORAGE_BUCKET)
+    .list(STORAGE_FOLDER, { limit:100, sortBy:{ column:'created_at', order:'desc' } });
+  if(e1) throw e1;
+  const files=(list||[]).filter(f=>f.name && f.name.toLowerCase().endsWith('.csv'));
+  if(!files.length) throw new Error('Nessun file CSV trovato nel bucket "'+STORAGE_BUCKET+'".');
+  const path=(STORAGE_FOLDER?STORAGE_FOLDER+'/':'')+files[0].name;   // il piu' recente
+  const { data:blob, error:e2 } = await sb.storage.from(STORAGE_BUCKET).download(path);
+  if(e2) throw e2;
+  let text=(await blob.text()).replace(/^\uFEFF/,'');
+  const first=text.split('\n')[0];
+  const delim=(first.split('\t').length > first.split(',').length) ? '\t' : ',';
+  const parsed=Papa.parse(text, { delimiter:delim, skipEmptyLines:true });
+  const { D, V }=transform(parsed.data);
+  DATA=D; VERB=V; SEGS=[];
+}
+
+function startDashboard(){
+  ['f-country','f-region','f-business','f-member'].forEach((id,i)=>fillSelect(id,['country','region','business','member'][i]));
+  setDay(1);
+}
+
+/* ---- login / sessione ---- */
+const $ = id => document.getElementById(id);
+function showLogin(){ $('login').style.display='flex'; $('app').style.display='none'; $('loading').style.display='none'; }
+function showApp(){ $('login').style.display='none'; $('app').style.display='block'; }
+
+async function enterApp(){
+  $('login').style.display='none'; $('loading').style.display='flex';
+  try { await loadData(); $('loading').style.display='none'; showApp(); startDashboard(); }
+  catch (e) { $('loading').style.display='none'; showLogin(); $('loginErr').textContent='Errore dati: '+(e.message||e); }
+}
+
+async function doLogin(){
+  const email=$('email').value.trim(), pwd=$('pwd').value;
+  $('loginErr').textContent='';
+  $('loginBtn').disabled=true; $('loginBtn').textContent='Accesso...';
+  const { error } = await sb.auth.signInWithPassword({ email, password: pwd });
+  $('loginBtn').disabled=false; $('loginBtn').textContent='Entra';
+  if(error){ $('loginErr').textContent='Credenziali non valide.'; return; }
+  await enterApp();
+}
+
+$('loginBtn').addEventListener('click', doLogin);
+$('pwd').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+$('logout').addEventListener('click', async ()=>{ await sb.auth.signOut(); location.reload(); });
+
+/* ---- avvio: gestisce l'F5 (se gia' loggato mostra i dati) ---- */
+(async ()=>{
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session) await enterApp(); else showLogin();
+})();
+
+</script>
+</body></html>
